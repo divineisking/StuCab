@@ -1,3 +1,74 @@
+<?php
+// Start the session
+session_start();
+
+// Check if the form is submitted
+if (isset($_POST['submit'])) {
+    // Get the input from the signup form
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+    $email = $_POST['email'];
+    $role = $_POST['role'];
+    $user_id = random_int( 2, 124);
+
+    // Replace these variables with your actual database credentials
+    $db_host = 'localhost';
+    $db_user = 'root';
+    $db_pass = '';
+    $db_name = 'stucab';
+
+    // Create a database connection using mysqli with prepared statements
+    $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+
+    // Check if the connection is successful
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Check if the username or email already exists in the database
+    $check_query = "SELECT * FROM users WHERE username = ? OR email = ?";
+    $stmt_check = $conn->prepare($check_query);
+    $stmt_check->bind_param("ss", $username, $email);
+    $stmt_check->execute();
+
+    $result = $stmt_check->get_result();
+    if ($result->num_rows > 0) {
+        // Username or email already exists
+        $error_message = "Username or email already exists. Please choose a different one.";
+
+        // Pass the error message to JavaScript
+        echo "<script>let errorMessage = " . json_encode($error_message) . ";</script>";
+    } else {
+        // Hash the password before storing it in the database
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        // Insert the user information into the database
+        $insert_query = "INSERT INTO users (username, password, email, role, user_id) VALUES (?, ?, ?, ?, ?)";
+        $stmt_insert = $conn->prepare($insert_query);
+        $stmt_insert->bind_param("sssss", $username, $hashed_password, $email, $role, $user_id);
+        $stmt_insert->execute();
+
+        // Close the prepared statements
+        $stmt_insert->close();
+        $stmt_check->close();
+
+        // Close the database connection
+        $conn->close();
+
+        // Redirect the user to a success page or a login page
+        header("Location: loginUI.php");
+        exit();
+    }
+
+    // Close the prepared statement
+    $stmt_check->close();
+
+    // Close the database connection
+    $conn->close();
+}
+?>
+
+
 <!DOCTYPE html>
 <html>
 
@@ -165,7 +236,7 @@
                     <p class="text-muted mb-2">From Campus to Class, StuCab's Got Your Back - Eco-Friendly and Affordable!</p>
                     <div class="d-flex flex-column ">
                         <div class="d-flex align-items-center">
-                            <form action="#" class="form" id="forms" onsubmit="event.preventDefault()">
+                            <form action="" method="POST" class="form">
 
 
                                 <div class="progressbar">
@@ -182,72 +253,31 @@
                                         <input type="text" name="username" id="username" />
                                     </div>
                                     <div class="group-inputs">
-                                        <label for="position">Email</label>
-                                        <input type="text" name="position" id="position" />
-                                    </div>
-                                    <div class="group-inputs">
-                                        <label for="email">Password</label>
+                                        <label for="email">Email</label>
                                         <input type="text" name="email" id="email" />
                                     </div>
                                     <div class="group-inputs">
-                                        <label for="email">Confirm password</label>
-                                        <input type="text" name="email" id="email" />
+                                        <label for="password">Password</label>
+                                        <input type="password" name="password" id="password" />
                                     </div>
-                                    <div class="">
-                                        <a href="#" class="btn btn-next width-50 ml-auto">Next</a>
+                                    <div class="group-inputs">
+                                        <label for="confirm password">Confirm password</label>
+                                        <input type="password" name="confirm password" id="confirm_password" />
+                                    </div>
+                                    <div class="group-inputs">
+                                        <label for="email">Signup as </label>
+                                        <select name="role">
+                                            <option value="student">Student</option>
+                                            <option value="driver">Driver</option>
+                                        </select>
                                     </div>
                                 </div>
-                                <div class="step-forms">
-                                    <div class="group-inputs">
-                                        <label for="phone">Facebook</label>
-                                        <input type="text" name="phone" id="phone" />
-                                    </div>
-                                    <div class="group-inputs">
-                                        <label for="email">Twitter</label>
-                                        <input type="text" name="email" id="email" />
-                                    </div>
-                                    <div class="group-inputs">
-                                        <label for="email">Linkedin</label>
-                                        <input type="text" name="email" id="email" />
-                                    </div>
-                                    <div class="group-inputs">
-                                        <label for="email">Dribbble</label>
-                                        <input type="text" name="email" id="email" />
-                                    </div>
-                                    <div class="btns-group">
-                                        <a href="#" class="btn btn-prev">Previous</a>
-                                        <a href="#" class="btn btn-next">Next</a>
-                                    </div>
-                                </div>
-                                <div class="step-forms">
-                                    <div class="group-inputs">
-                                        <label for="dob">Date of Birth</label>
-                                        <input type="date" name="dob" id="dob" />
-                                    </div>
-                                    <div class="group-inputs">
-                                        <label for="ID">National ID</label>
-                                        <input type="number" name="ID" id="ID" />
-                                    </div>
-
-                                    <div class="group-inputs">
-                                        <label for="ID">Account Number</label>
-                                        <input type="number" name="ID" id="ID" />
-                                    </div>
-
-                                    <div class="group-inputs">
-                                        <label for="ID">Swift Code</label>
-                                        <input type="text" name="ID" id="ID" />
-                                    </div>
-                                    <div class="btns-group">
-                                        <a href="#" class="btn btn-prev">Previous</a>
-                                        <input type="submit" value="Submit" id="submit-form" class="btn" />
-                                    </div>
-                                </div>
+                                <input type="submit" class="btn btn-primary" value="submit" name="submit">
                             </form>
                         </div>
                         <div class="mt-3">
                             <p class="mb-0 text-muted">Already have an account?</p>
-                            <div class="btn btn-primary">Log in<span class="fas fa-chevron-right ms-1"></span></div>
+                            <div class="btn btn-primary"><a href="loginUI.php">Login</a><span class="fas fa-chevron-right ms-1"></span></div>
                         </div>
                     </div>
                 </div>
@@ -261,5 +291,12 @@
         </div>
     </div>
 </body>
+<script>
+    // Check if there's an error message from PHP
+    if (typeof errorMessage !== 'undefined' && errorMessage !== null) {
+        // Create the popup
+        alert(errorMessage);
+    }
+</script>
 
 </html>

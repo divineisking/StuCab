@@ -11,7 +11,7 @@ if (isset($_POST['submit'])) {
     // Replace these variables with your actual database credentials
     $db_host = 'your_database_host';
     $db_user = 'your_database_username';
-    $db_pass = 'your_database_password';
+    $db_pass = '';
     $db_name = 'your_database_name';
 
     // Create a database connection using mysqli with prepared statements
@@ -23,7 +23,7 @@ if (isset($_POST['submit'])) {
     }
 
     // Prepare the SQL query with a placeholder to fetch user data based on the provided username
-    $sql = "SELECT user_id, username, password FROM users WHERE username = ?";
+    $sql = "SELECT username, password FROM users WHERE username = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username); // "s" means the parameter is a string
 
@@ -43,6 +43,7 @@ if (isset($_POST['submit'])) {
             // Password is correct, so the login is successful
             $_SESSION['user_id'] = $row['user_id'];
             $_SESSION['username'] = $row['username'];
+            if ($row['user_role' == 'user'])
             header("Location: dashboard.php"); // Redirect to the dashboard or some other page
             exit();
         } else {
