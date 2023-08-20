@@ -9,7 +9,7 @@ if (isset($_POST['submit'])) {
     $password = $_POST['password'];
     $email = $_POST['email'];
     $role = $_POST['role'];
-    $user_id = random_int( 2, 124);
+    $user_id = random_int( 2, 1024);
 
     // Replace these variables with your actual database credentials
     $db_host = 'localhost';

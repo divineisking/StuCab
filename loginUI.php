@@ -1,3 +1,80 @@
+<?php
+// Start the session
+session_start();
+
+// Check if the form is submitted
+if (isset($_POST['submit'])) {
+    // Get the input from the login form
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+
+    // Replace these variables with your actual database credentials
+    $db_host = 'localhost';
+    $db_user = 'root';
+    $db_pass = '';
+    $db_name = 'stucab';
+
+    // Create a database connection using mysqli with prepared statements
+    $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+
+    // Check if the connection is successful
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Prepare the SQL query with a placeholder to fetch user data based on the provided username
+    $sql = "SELECT * FROM users WHERE email = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $email); // "s" means the parameter is a string
+
+    // Execute the prepared statement
+    $stmt->execute();
+
+    // Get the result
+    $result = $stmt->get_result();
+
+    // Check if the query returned any rows
+    if ($result->num_rows === 1) {
+        // Fetch the user data
+        $row = $result->fetch_assoc();
+
+        // Verify the password using password_verify
+        if (password_verify($password, $row['password'])) {
+            // Password is correct, so the login is successful
+            $_SESSION['email'] = $row['email'];
+            $_SESSION['user_role'] = $row['role'];
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['user_id'] = $row['user_id']; // Store user ID in session
+            if ($row['role'] == 'student'){
+            header("Location: Dashboards/studentDash/index.php"); // Redirect to the dashboard or some other page
+            }
+             elseif ($row['role'] == 'driver') {
+                # code...
+                header("Location: Dashboards/driverDash/index.html");
+             }
+            else {
+                $error_message = "Invalid user.";
+                echo "<script>let errorMessage = " . json_encode($error_message) . ";</script>";
+            }
+            exit();
+        } else {
+            // Invalid password
+            $error_message = "Invalid password";
+            echo "<script>let errorMessage = " . json_encode($error_message) . ";</script>";
+        }
+    } else {
+        // User not found
+        $error_message = "User not found";
+        echo "<script>let errorMessage = " . json_encode($error_message) . ";</script>";
+    }
+
+    // Close the prepared statement
+    $stmt->close();
+
+    // Close the database connection
+    $conn->close();
+}
+?>
 <!DOCTYPE html>
 <html>
 
@@ -192,7 +269,30 @@
                 <div class="col-lg-6">
                     <div class="card1 pb-5">
                         <div class="row">
-                            <img src="" class="logo">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"
+                                style="max-width: 50px; max-height: 50px;">
+                                <style>
+                                    /* Inline CSS styles */
+                                    .st0 {
+                                        fill: #FF0000;
+                                        /* Fill color */
+                                    }
+
+                                    .st1 {
+                                        fill: #00FF00;
+                                        /* Fill color */
+                                    }
+
+                                    /* ... add more styles as needed ... */
+                                </style>
+                                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                                <g id="SVGRepo_iconCarrier">
+                                    <!-- Reference to external SVG file -->
+                                    <image xlink:href="IMG/StuCab_Logo_1.svg" width="50" height="50" />
+                                </g>
+                            </svg>
+
                         </div>
                         <div class="row px-3 justify-content-center mt-4 mb-5 border-line">
                             <img src="IMG/loginImage.jpg" class="image">
@@ -204,33 +304,35 @@
                         <div class="row mb-4 px-3">
                             <h1 class="mb-0 mr-4 mt-2" style="color: blueviolet;">Sign in</h1>
                         </div>
-                        <div class="row px-3">
-                            <label class="mb-1">
-                                <h6 class="mb-0 text-sm">Email Address</h6>
-                            </label>
-                            <input class="mb-4" type="text" name="email" placeholder="Enter a valid email address">
-                        </div>
-                        <div class="row px-3">
-                            <label class="mb-1">
-                                <h6 class="mb-0 text-sm">Password</h6>
-                            </label>
-                            <input type="password" name="password" placeholder="Enter password">
-                        </div>
-                        <div class="row px-3 mb-4">
-                            <div class="custom-control custom-checkbox custom-control-inline">
-                                <input id="chk1" type="checkbox" name="chk" class="custom-control-input">
-                                <label for="chk1" class="custom-control-label text-sm">Remember me</label>
+                        <form action="" method="POST">
+                            <div class="row px-3">
+                                <label class="mb-1">
+                                    <h6 class="mb-0 text-sm">Email Address</h6>
+                                </label>
+                                <input class="mb-4" type="text" name="email" placeholder="Enter a valid email address">
                             </div>
-                            <a href="#" class="ml-auto mb-0 text-sm">Forgot Password?</a>
-                        </div>
-                        <div class="row mb-3 px-3">
-                            <button type="submit" class="btn text-center"
-                                style="display: inline-block; padding: 10px 20px; background-color: #8A2BE2; color: #ffffff; text-decoration: none; border-radius: 4px; transition: background-color 0.3s;"
-                                onmouseover="this.style.backgroundColor='#8A2BE2';"
-                                onmouseout="this.style.backgroundColor='#8A2BE2';">Login</button>
-                        </div>
+                            <div class="row px-3">
+                                <label class="mb-1">
+                                    <h6 class="mb-0 text-sm">Password</h6>
+                                </label>
+                                <input type="password" name="password" placeholder="Enter password">
+                            </div>
+                            <div class="row px-3 mb-4">
+                                <div class="custom-control custom-checkbox custom-control-inline">
+                                    <input id="chk1" type="checkbox" name="chk" class="custom-control-input">
+                                    <label for="chk1" class="custom-control-label text-sm">Remember me</label>
+                                </div>
+                                <a href="#" class="ml-auto mb-0 text-sm">Forgot Password?</a>
+                            </div>
+                            <div class="row mb-3 px-3">
+                                <button type="submit" name="submit" class="btn text-center"
+                                    style="display: inline-block; padding: 10px 20px; background-color: #8A2BE2; color: #ffffff; text-decoration: none; border-radius: 4px; transition: background-color 0.3s;"
+                                    onmouseover="this.style.backgroundColor='#8A2BE2';"
+                                    onmouseout="this.style.backgroundColor='#8A2BE2';">Login</button>
+                            </div>
+                        </form>
                         <div class="row mb-4 px-3">
-                            <small class="font-weight-bold">Don't have an account? <a
+                            <small class="font-weight-bold">Don't have an account? <a href="signupUI.php"
                                     class="text-danger ">Register</a></small>
                         </div>
                     </div>
@@ -250,5 +352,12 @@
         </div>
     </div>
 </body>
+<script>
+    // Check if there's an error message from PHP
+    if (typeof errorMessage !== 'undefined' && errorMessage !== null) {
+        // Create the popup
+        alert(errorMessage);
+    }
+</script>
 
 </html>
